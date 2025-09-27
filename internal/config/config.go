@@ -29,7 +29,6 @@ type Config struct {
 		KeySize       int    `yaml:"key_size"`
 		KeyAlgorithm  string `yaml:"key_algorithm"`
 		CertPath      string `yaml:"cert_path"`
-		KeyPath       string `yaml:"key_path"`
 		CSRPath       string `yaml:"csr_path"`
 	} `yaml:"certificate"`
 

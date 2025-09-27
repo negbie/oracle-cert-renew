@@ -22,7 +22,6 @@ certificate:
 
   # Optional: Paths for certificate files
   cert_path: ""                  # Path to signed certificate (leave empty to only generate CSR)
-  key_path: ""                   # Path to private key (if needed)
   csr_path: "./sbc.csr"          # Path where CSR will be saved
 
 # TLS Profile Settings (Optional)
