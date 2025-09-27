@@ -1,0 +1,73 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Binary output directory
+bin/
+dist/
+releases/
+
+# Configuration files with sensitive data
+config.yaml
+*.key
+*.crt
+*.csr
+*.pem
+*.pfx
+*.p12
+
+# But keep example configs
+!config.yaml.example
+
+# IDE specific files
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+*.iml
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*.log
+
+# Coverage reports
+coverage.out
+coverage.html
+*.cover
+
+# Air (hot reload) temporary directory
+tmp/
+
+# Environment variables
+.env
+.env.local
+
+# Debug files
+__debug_bin
+
+# Oracle SBC specific
+sbc.csr
+sbc-cert.pem
+oracle-cert-renew
+
+# Token cache files
+.token-*.json
