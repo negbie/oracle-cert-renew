@@ -23,6 +23,7 @@ type Config struct {
 		Name          string `yaml:"name"`
 		Country       string `yaml:"country"`
 		State         string `yaml:"state"`
+		Locality      string `yaml:"locality"` // Optional (city). Included in certificate record if set.
 		Organization  string `yaml:"organization"`
 		CommonName    string `yaml:"common_name"`
 		AlternateName string `yaml:"alternate_name"`

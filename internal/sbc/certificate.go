@@ -53,17 +53,24 @@ type ConfigResponse struct {
 
 // CheckConnection verifies the connection and authentication with the SBC
 func (c *Client) CheckConnection() error {
-	// Try to get the system status to verify connectivity
+	// Fetch system status to verify connectivity and show status output
 	resp, err := c.doRequest("GET", "/system/status", nil)
 	if err != nil {
 		return fmt.Errorf("connection test failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("connection test failed with status %d: %s", resp.StatusCode, body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("reading system status response: %w", err)
 	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("connection test failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Log and also print to stdout (stdout printing lets user see it immediately in check mode)
+	log.Printf("System status response:\n%s", string(body))
 
 	return nil
 }
@@ -89,7 +96,7 @@ func (c *Client) CreateCertificateRecord(force bool) error {
 	}
 
 	// Build certificate record XML
-	// Valid fields for Oracle SBC certificate-record: name, country, state, organization, common-name, key-size, key-algor, alternate-name
+	// Valid fields for Oracle SBC certificate-record: name, country, state, locality, organization, common-name, key-size, key-algor, alternate-name
 	record := CertificateRecord{
 		ElementType: "certificate-record",
 		Attributes: []RecordAttribute{
@@ -108,6 +115,12 @@ func (c *Client) CreateCertificateRecord(force bool) error {
 		record.Attributes = append(record.Attributes, RecordAttribute{
 			Name:  "alternate-name",
 			Value: sanitizeField(c.config.Certificate.AlternateName),
+		})
+	}
+	if c.config.Certificate.Locality != "" {
+		record.Attributes = append(record.Attributes, RecordAttribute{
+			Name:  "locality",
+			Value: sanitizeField(c.config.Certificate.Locality),
 		})
 	}
 
@@ -256,6 +269,12 @@ func (c *Client) CreateCertificateRecordAndGenerateCSR(force bool) (string, erro
 			Value: sanitizeField(c.config.Certificate.AlternateName),
 		})
 	}
+	if c.config.Certificate.Locality != "" {
+		record.Attributes = append(record.Attributes, RecordAttribute{
+			Name:  "locality",
+			Value: sanitizeField(c.config.Certificate.Locality),
+		})
+	}
 
 	xmlData, err := xml.MarshalIndent(record, "", "  ")
 	if err != nil {
@@ -300,12 +319,7 @@ func (c *Client) CreateCertificateRecordAndGenerateCSR(force bool) (string, erro
 		}
 	}
 
-	// Step 3: Save / verify / activate
-	if err := c.saveAndActivateConfig(); err != nil {
-		return "", fmt.Errorf("saving/activating config: %w", err)
-	}
-
-	// Step 4: Generate CSR under same lock
+	// Step 3: Generate CSR under same lock
 	csrEndpoint := fmt.Sprintf("/configuration/certificates/generateRequest?recordName=%s", c.config.Certificate.Name)
 	csrResp, err := c.doRequest("PUT", csrEndpoint, nil)
 	if err != nil {
@@ -328,6 +342,15 @@ func (c *Client) CreateCertificateRecordAndGenerateCSR(force bool) (string, erro
 	csr := strings.TrimSpace(parsed.Data.CertificateRequest.CSR)
 	if csr == "" {
 		return "", fmt.Errorf("empty CSR received")
+	}
+
+	if exists && !force {
+		return "", fmt.Errorf("certificate already exists")
+	}
+
+	// Step 4: Save / verify / activate
+	if err := c.saveAndActivateConfig(); err != nil {
+		return "", fmt.Errorf("saving/activating config: %w", err)
 	}
 
 	log.Println("Certificate record created/updated, configuration activated, and CSR generated (single lock session).")
