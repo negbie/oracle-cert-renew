@@ -148,7 +148,6 @@ oracle-cert-renew -mode import -cert-in sbc.crt -logstd
 - Update the specified TLS profile to use the new certificate
 - Optionally delete the old certificate record
 - Save and activate the configuration
-- You may need to reboot the SBC for the changes to take effect
 
 #### 3. Check Mode
 Verifies connection and authentication with the SBC.
@@ -227,9 +226,7 @@ When TLS profile management is enabled, the import process will:
 2. Update the specified TLS profile to use the new certificate
 3. Optionally delete the old certificate record
 4. Save and activate the configuration
-5. Display a reminder to reboot the SBC if needed
 
-**Important:** After updating the TLS profile, you may need to reboot the SBC for the new certificate to take effect on the REST API interface.
 
 ### Automation Example
 
@@ -250,8 +247,6 @@ oracle-cert-renew -config $CONFIG -mode generate -csr-out $CSR_PATH
 # Import certificate once available
 oracle-cert-renew -config $CONFIG -mode import -cert-in $CERT_PATH
 
-# Reboot SBC if needed
-# ssh admin@sbc-host "reboot"
 ```
 
 ## Docker Usage
@@ -408,32 +403,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For issues, questions, or suggestions, please open an issue on GitHub:
 https://github.com/negbie/oracle-cert-renew/issues
-
-## Changelog
-
-### v1.2.0 (2024-09-25)
-- **Breaking Change**: Removed confusing `full` mode that required cert-in with csr-out
-- **New Feature**: Added automatic TLS profile management after certificate import
-  - Update TLS profile to use new certificate
-  - Optionally delete old self-signed certificates
-  - Configurable via `tls_profile` section in config
-- **Enhancement**: Clearer workflow separation between CSR generation and certificate import
-- **Documentation**: Added comprehensive TLS profile configuration examples
-
-### v1.1.0 (2024-09-24)
-- **Breaking Change**: Switched to flag-based operation modes instead of file path detection
-- Added explicit `-mode` flag for clear operation control
-- Added `-csr-out` and `-cert-in` flags for file paths
-- Added `-force` flag to overwrite existing certificate records
-- Added `-check` mode for connection verification
-- Added `-record` flag to override certificate record name
-- Improved error messages and user feedback
-- Enhanced verbose logging
-
-### v1.0.0 (2024-09-24)
-- Initial release
-- Support for certificate record creation
-- CSR generation
-- Certificate import
-- Configuration management
-- Verbose logging option
