@@ -528,9 +528,11 @@ func (c *Client) ImportCertificate(certificateData string, force bool) error {
 			if err := c.saveAndActivateConfig(); err != nil {
 				return fmt.Errorf("saving config after import: %w", err)
 			}
+
 			if err := c.UpdateTLSProfileAfterImport(); err != nil {
 				return fmt.Errorf("updating TLS profile: %w", err)
 			}
+
 			log.Printf("Certificate imported successfully using attempt '%s'", at.name)
 			return nil
 		}

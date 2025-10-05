@@ -21,7 +21,7 @@ certificate:
   key_algorithm: "rsa"           # Key algorithm: rsa (default: rsa)
 
   # Optional: Paths for certificate files
-  cert_path: ""                  # Path to signed certificate (leave empty to only generate CSR)
+  cert_path: ""                  # Path to signed certificate for import mode (can be overridden by -cert_path flag)
   csr_path: "./sbc.csr"          # Path where CSR will be saved
 
 # TLS Profile Settings (Optional)
@@ -33,3 +33,5 @@ tls_profile:
   delete_old_certificate: false  # Delete the old certificate record after update
   old_certificate_name: ""       # Name of the old certificate to delete (e.g., "defaultSelfSignedRestCert")
   trusted-ca-certificates: "R10,R11" # Comma separated list of allowed intermediate CA certificate CNs (optional)
+
+post-generate-hook: "echo CSR generated: $(date) >> csr_events.log"

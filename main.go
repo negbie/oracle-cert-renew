@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -29,7 +30,7 @@ func main() {
 		configFile  = flag.String("config", "config.yaml", "Configuration file path")
 		mode        = flag.String("mode", "generate", "Operation mode: generate (CSR only), import (certificate), check (verify connection)")
 		csrPath     = flag.String("csr-out", "", "Path to save generated CSR (optional, defaults to stdout if not specified)")
-		certPath    = flag.String("cert-in", "", "Path to signed certificate for import (required for import mode)")
+		certPath    = flag.String("cert_path", "", "Path to signed certificate for import (required for import mode)")
 		recordName  = flag.String("record", "", "Override certificate record name from config")
 		showVersion = flag.Bool("version", false, "Show version information")
 		force       = flag.Bool("force", false, "Force overwrite existing certificate record")
@@ -50,7 +51,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  # Generate CSR only\n")
 		fmt.Fprintf(os.Stderr, "  %s -mode generate -csr-out sbc.csr\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  # Import signed certificate\n")
-		fmt.Fprintf(os.Stderr, "  %s -mode import -cert-in sbc.crt\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s -mode import -cert_path sbc.crt\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  # Check connection\n")
 		fmt.Fprintf(os.Stderr, "  %s -mode check\n\n", os.Args[0])
 	}
@@ -87,16 +88,6 @@ func main() {
 		log.Fatalf("Invalid mode: %s. Use 'generate', 'import', 'check', 'unlock', or 'clear-token'", *mode)
 	}
 
-	// Validate required parameters based on mode
-	if opMode == ModeImport {
-		if *certPath == "" {
-			log.Fatalf("Certificate path (-cert-in) is required for %s mode", opMode)
-		}
-		if _, err := os.Stat(*certPath); err != nil {
-			log.Fatalf("Certificate file not found: %v", err)
-		}
-	}
-
 	// Load configuration
 	log.Printf("Loading configuration from: %s", *configFile)
 	cfg, err := config.Load(*configFile)
@@ -115,6 +106,16 @@ func main() {
 	}
 	if *certPath != "" {
 		cfg.Certificate.CertPath = *certPath
+	}
+
+	// Validate required parameters based on mode
+	if opMode == ModeImport {
+		if cfg.Certificate.CertPath == "" {
+			log.Fatalf("Certificate path (-cert_path or config cert_path) is required for %s mode", opMode)
+		}
+		if _, err := os.Stat(cfg.Certificate.CertPath); err != nil {
+			log.Fatalf("Certificate file not found: %v", err)
+		}
 	}
 
 	// Create SBC client
@@ -159,8 +160,18 @@ func main() {
 			log.Fatalf("CSR generation failed: %v", err)
 		}
 		log.Println("CSR generation completed successfully")
+		if cfg.PostGenerateHook != "" {
+			log.Printf("Executing post-generate-hook: %s", cfg.PostGenerateHook)
+			cmd := exec.Command("sh", "-c", cfg.PostGenerateHook)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				log.Printf("post-generate-hook failed: %v (output: %s)", err, string(out))
+			} else {
+				log.Printf("post-generate-hook completed successfully")
+			}
+		}
 	case ModeImport:
-		if err := importCertificate(client, cfg, *certPath, *force); err != nil {
+		if err := importCertificate(client, cfg, cfg.Certificate.CertPath, *force); err != nil {
 			log.Fatalf("Certificate import failed: %v", err)
 		}
 		log.Println("Certificate import completed successfully")
@@ -214,7 +225,7 @@ func generateCSR(client *sbc.Client, cfg *config.Config, force bool) error {
 	log.Println("\nNext steps:")
 	log.Println("1. Submit the CSR to your Certificate Authority")
 	log.Println("2. After the CA returns the signed certificate, import it with:")
-	log.Printf("   %s -mode import -cert-in <certificate-file>", os.Args[0])
+	log.Printf("   %s -mode import -cert_path <certificate-file>", os.Args[0])
 
 	return nil
 }

@@ -43,6 +43,7 @@ type Config struct {
 	} `yaml:"tls_profile"`
 
 	// Verbose field removed (was: Verbose bool `yaml:"verbose"`)
+	PostGenerateHook string `yaml:"post-generate-hook"` // Optional shell command to run after successful CSR generation
 }
 
 type CSVStringList []string

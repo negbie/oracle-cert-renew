@@ -94,7 +94,9 @@ tls_profile:
   old_certificate_name: ""       # Name of old certificate to delete
   trusted-ca-certificates: "R10,R11" # Comma separated list of allowed intermediate CA certificate CNs (optional)
 
-# (General settings section removed: verbose flag no longer exists; logging always on. Use -logstd to also log to stdout.)
+post-generate-hook: "echo CSR generated: $(date) >> csr_events.log" # Optional shell command run after successful CSR generation
+
+# (General settings section removed: verbose flag no longer exists; logging always on. Use -logstd to also log to stdout. post-generate-hook runs after CSR generation.)
 ```
 
 ## Usage
@@ -109,7 +111,7 @@ Options:
   -mode string      Operation mode (default "generate")
                     Options: generate, import, check
   -csr-out string   Path to save generated CSR (optional, stdout if not specified)
-  -cert-in string   Path to signed certificate for import (required for import)
+  -cert_path string Path to signed certificate for import (required for import)
   -record string    Override certificate record name from config
   -force           Force overwrite existing certificate record
   -logstd          Also log to stdout (in addition to oracle-cert-renew.log)
@@ -138,10 +140,10 @@ Imports a CA-signed certificate after CSR generation.
 
 ```bash
 # Import certificate
-oracle-cert-renew -mode import -cert-in sbc.crt
+oracle-cert-renew -mode import -cert_path sbc.crt
 
 # Mirror logs to terminal while importing
-oracle-cert-renew -mode import -cert-in sbc.crt -logstd
+oracle-cert-renew -mode import -cert_path sbc.crt -logstd
 ```
 
 **Note:** If TLS profile management is enabled in the configuration, the import mode will automatically:
@@ -181,7 +183,7 @@ Submit the CSR to your Certificate Authority (CA):
 
 #### Step 3: Import Signed Certificate
 ```bash
-oracle-cert-renew -mode import -cert-in sbc.crt
+oracle-cert-renew -mode import -cert_path sbc.crt
 ```
 This will:
 - Import the signed certificate to the SBC
@@ -245,7 +247,7 @@ oracle-cert-renew -config $CONFIG -mode generate -csr-out $CSR_PATH
 # submit_to_ca $CSR_PATH $CERT_PATH
 
 # Import certificate once available
-oracle-cert-renew -config $CONFIG -mode import -cert-in $CERT_PATH
+oracle-cert-renew -config $CONFIG -mode import -cert_path $CERT_PATH
 
 ```
 
@@ -278,7 +280,7 @@ docker run --rm \
   -v $(pwd)/config.yaml:/app/config/config.yaml:ro \
   -v $(pwd)/certs:/app/certs:ro \
   oracle-cert-renew:latest \
-  -mode import -cert-in /app/certs/sbc.crt
+  -mode import -cert_path /app/certs/sbc.crt
 ```
 
 ## REST API Endpoints Used
@@ -355,7 +357,7 @@ Use -logstd to also stream logs to stdout:
 oracle-cert-renew -mode generate -csr-out sbc.csr -logstd
 
 # Import certificate with stdout logging
-oracle-cert-renew -mode import -cert-in sbc.crt -logstd
+oracle-cert-renew -mode import -cert_path sbc.crt -logstd
 ```
 
 ## Building from Source
