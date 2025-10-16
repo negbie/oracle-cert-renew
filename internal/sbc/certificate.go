@@ -525,15 +525,17 @@ func (c *Client) ImportCertificate(certificateData string, force bool) error {
 		if lastStatus == http.StatusOK || lastStatus == http.StatusAccepted || lastStatus == http.StatusNoContent {
 			log.Printf("[import] %s succeeded (status %d)", at.name, lastStatus)
 			// Save & activate
-			if err := c.saveAndActivateConfig(); err != nil {
-				return fmt.Errorf("saving config after import: %w", err)
+			if !c.config.TLSProfile.Enabled {
+				if err := c.saveAndActivateConfig(); err != nil {
+					return fmt.Errorf("saving config after import: %w", err)
+				}
 			}
 
+			log.Printf("Certificate imported successfully using attempt '%s'", at.name)
 			if err := c.UpdateTLSProfileAfterImport(); err != nil {
 				return fmt.Errorf("updating TLS profile: %w", err)
 			}
 
-			log.Printf("Certificate imported successfully using attempt '%s'", at.name)
 			return nil
 		}
 

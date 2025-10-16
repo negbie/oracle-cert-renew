@@ -15,7 +15,7 @@ import (
 	"github.com/negbie/oracle-cert-renew/internal/sbc"
 )
 
-const version = "v1.1.0"
+const version = "v1.1.2"
 
 type Mode string
 
